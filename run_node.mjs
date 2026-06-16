@@ -4,12 +4,11 @@
 //
 //   node --experimental-wasm-exnref run_node.mjs
 //
-// V8 enforces the same constraints a browser does, so an *unpatched* build
-// fails here too, with the same messages the browser would show:
-//   - "WebAssembly.instantiate(): Imported … wasi_snapshot_preview1" unresolved
-//   - "module uses a mix of legacy and new exception handling instructions"
-//   - "null function or function signature mismatch"  (__wasm_call_ctors unrun)
-// A correctly built module prints "NODETEST:OK …" and exits 0.
+// V8 enforces the same constraints a browser does. Because the three runtime
+// problems are now fixed upstream in cadrum (in-tree WASI stubs, exnref EH,
+// cadrum::wasm_start!()), a correctly built module just works here: init()
+// auto-runs OCCT's C++ ctors via the wasm-bindgen start shim, then step_to_glb
+// converts the bundled STEP to GLB. Prints "NODETEST:OK …" and exits 0.
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -20,13 +19,7 @@ const stepPath = fileURLToPath(new URL("./public/colored_box_roundtrip.step", im
 const mod = await import("./wasm/pkg/cadrum_web.js");
 // wasm-pack `--target web` init fetches the .wasm by URL by default; Node's
 // fetch can't read file URLs, so hand it the bytes explicitly.
-const bytes = readFileSync(wasmPath);
-try {
-  await mod.default({ module_or_path: bytes });
-} catch {
-  // Older wasm-bindgen glue takes the bytes positionally.
-  await mod.default(bytes);
-}
+await mod.default({ module_or_path: readFileSync(wasmPath) });
 
 const step = readFileSync(stepPath);
 const glb = mod.step_to_glb(new Uint8Array(step));
