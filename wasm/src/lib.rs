@@ -2,6 +2,11 @@ use wasm_bindgen::prelude::*;
 use cadrum::Solid;
 use std::io::Cursor;
 
+// Run OCCT's C++ global constructors at init (wasm-bindgen start shim). Without
+// this the first OCCT call hits uninitialized type tables ("null function or
+// function signature mismatch"). See cadrum::wasm_start!.
+cadrum::wasm_start!();
+
 /// Convert STEP bytes to a binary glTF (GLB) entirely in-memory.
 /// STEP -> Vec<Solid> -> Mesh -> GLB bytes.
 #[wasm_bindgen]
