@@ -19,53 +19,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      # Project Pages live at https://lzpel.github.io/cadrum-wasm-example/ , so
-      # the static build must use this base path (Trunk --public-url).
-      PUBLIC_URL: /cadrum-wasm-example/
-      # build.sh reads this to find the wasi-sdk clang + sysroot.
-      WASI_SDK_PATH: ${{ github.workspace }}/wasi-sdk-33
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Install Rust (stable) + wasm target
-        run: |
-          rustup toolchain install stable --profile minimal --no-self-update
-          rustup default stable
-          rustup target add wasm32-unknown-unknown
-
-      - name: Cache cargo + target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install Trunk
-        run: |
-          curl -fsSL https://github.com/trunk-rs/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          install -m 0755 trunk "$HOME/.cargo/bin/trunk"
-
-      - name: Download wasi-sdk 33 (Linux)
-        run: |
-          curl -L https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-33/wasi-sdk-33.0-x86_64-linux.tar.gz | tar xz
-          mv wasi-sdk-33.0-x86_64-linux wasi-sdk-33
-          test -x wasi-sdk-33/bin/clang
-
-      - name: Build wasm site (Trunk, cadrum from git)
-        run: bash build.sh build --release --public-url "$PUBLIC_URL"
-
-      # Run the SAME wasm under Node (V8) — catches wasm runtime bugs without a
-      # browser. Fails the build if chijin GLB generation is broken.
-      - name: Headless smoke test (Node)
-        run: node --experimental-wasm-exnref run_node.mjs
+      # Build inside cadrum's cross-wasm image (wasi-sdk + all wasm32 env).
+      # The Makefile handles installing Trunk and producing ./dist.
+      - name: Build wasm site (make deploy-cross)
+        run: make deploy-cross
 
       - uses: actions/configure-pages@v5
         with:
