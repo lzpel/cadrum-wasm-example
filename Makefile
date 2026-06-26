@@ -1,6 +1,6 @@
 # GitHub Pages serves this project at a sub-path, so the static build must use
 # it as the base URL (Trunk --public-url).
-PUBLIC_URL ?= /cadrum-wasm-example/
+PUBLIC_URL ?= /opencascade-wasm32-unknown-unknown-example/
 # cadrum's published cross image: wasi-sdk clang + sysroot and every wasm32 env
 # var (CC/CXX/CFLAGS/CXXFLAGS/RUSTFLAGS, CARGO_BUILD_TARGET=wasm32) preset.
 CROSS_IMAGE ?= ghcr.io/lzpel/cross-wasm32-unknown-unknown:latest
